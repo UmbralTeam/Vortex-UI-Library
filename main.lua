@@ -10,10 +10,7 @@ for _, v in pairs(PlayerGui:GetChildren()) do
         v:Destroy()
     end
 end
-if getgenv then
-    if getgenv().VX_V20_LOADED then task.wait(0.1) end
-    getgenv().VX_V20_LOADED = true
-end
+
 
 -- [ CORE CONFIG ]
 local Library = {
