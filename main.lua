@@ -619,9 +619,53 @@ CombatTab:CreateButton("Kill Aura (Instant)", function() Library:CreateDialog({ 
 -- TAB: VISUALS
 local VisualTab = Win:CreateTab("Visuals (ESP)", "rbxassetid://6034502932")
 VisualTab:CreateSection("ESP Settings")
-VisualTab:CreateToggle("Enable ESP (Name Tags)", false, function(state) Library:Notify("Visuals", "ESP Toggled: "..tostring(state), 3) end)
+VisualTab:CreateToggle("Enable ESP (Name Tags)", false, function(state)
+    _G.NameESP = state
+    if state then
+        task.spawn(function()
+            while _G.NameESP do
+                task.wait(0.5)
+                pcall(function()
+                    for _, p in pairs(Players:GetPlayers()) do
+                        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                            local head = p.Character.Head
+                            if not head:FindFirstChild("VESP") then
+                                local bg = Instance.new("BillboardGui", head); bg.Name = "VESP"; bg.Size = UDim2.new(0, 100, 0, 40); bg.AlwaysOnTop = true; bg.StudsOffset = Vector3.new(0, 2, 0)
+                                local tl = Instance.new("TextLabel", bg); tl.Size = UDim2.new(1,0,1,0); tl.BackgroundTransparency = 1; tl.Text = p.Name; tl.TextColor3 = Color3.fromRGB(255,100,100); tl.TextStrokeTransparency = 0; tl.Font = Enum.Font.GothamBold; tl.TextSize = 14
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+    else
+        pcall(function() for _, p in pairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("Head") and p.Character.Head:FindFirstChild("VESP") then p.Character.Head.VESP:Destroy() end end end)
+    end
+    Library:Notify("Visuals", "ESP Toggled: "..tostring(state), 3)
+end)
 VisualTab:CreateToggle("Show Tracers", false, function(state) Library:Notify("Visuals", "Tracers Toggled: "..tostring(state), 3) end)
-VisualTab:CreateToggle("Chams (Wallhack)", false, function(state) Library:Notify("Visuals", "Chams Toggled: "..tostring(state), 3) end)
+VisualTab:CreateToggle("Chams (Wallhack)", false, function(state)
+    _G.ChamsESP = state
+    if state then
+        task.spawn(function()
+            while _G.ChamsESP do
+                task.wait(0.5)
+                pcall(function()
+                    for _, p in pairs(Players:GetPlayers()) do
+                        if p ~= LocalPlayer and p.Character then
+                            if not p.Character:FindFirstChild("VCham") then
+                                local hl = Instance.new("Highlight", p.Character); hl.Name = "VCham"; hl.FillColor = Color3.fromRGB(255, 0, 0); hl.OutlineColor = Color3.fromRGB(255, 255, 255); hl.FillTransparency = 0.5; hl.OutlineTransparency = 0; hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+    else
+        pcall(function() for _, p in pairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("VCham") then p.Character.VCham:Destroy() end end end)
+    end
+    Library:Notify("Visuals", "Chams Toggled: "..tostring(state), 3)
+end)
 
 VisualTab:CreateSection("World Helpers")
 VisualTab:CreateToggle("Full Bright", false, function(state) pcall(function() if state then game:GetService("Lighting").Ambient = Color3.new(1, 1, 1); game:GetService("Lighting").Brightness = 2 else game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127); game:GetService("Lighting").Brightness = 1 end end) end)
@@ -644,6 +688,44 @@ VisualTab:CreateToggle("Show Aimbot FOV Circle", false, function(state)
         if _G.FOVConn then _G.FOVConn:Disconnect(); _G.FOVConn = nil end
         Library:Notify("Visuals", "Aimbot FOV Off", 3)
     end
+end)
+
+-- TAB: TROLLING & TARGETING
+local TrollTab = Win:CreateTab("Trolling", "rbxassetid://6022668888")
+TrollTab:CreateSection("Target Selection")
+local TargetPlayer = ""
+TrollTab:CreateTextbox("Enter Target Name (Short)", "Player Name...", function(text) TargetPlayer = text; Library:Notify("Target", "Set target to: "..text, 3) end)
+
+TrollTab:CreateSection("Interactive Actions")
+TrollTab:CreateButton("Spectate Target", function()
+    local found = false
+    for _, p in pairs(Players:GetPlayers()) do
+        if TargetPlayer ~= "" and string.lower(string.sub(p.Name, 1, #TargetPlayer)) == string.lower(TargetPlayer) and p.Character then
+            workspace.CurrentCamera.CameraSubject = p.Character:FindFirstChildOfClass("Humanoid")
+            Library:Notify("Spectate", "Spectating: "..p.Name, 3)
+            found = true; break
+        end
+    end
+    if not found then Library:Notify("Spectate", "Target not found!", 3) end
+end)
+
+TrollTab:CreateButton("Unspectate", function()
+    if LocalPlayer.Character then workspace.CurrentCamera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid") end
+    Library:Notify("Spectate", "Returned to normal camera.", 3)
+end)
+
+TrollTab:CreateButton("Teleport Behind Target", function()
+    local found = false
+    for _, p in pairs(Players:GetPlayers()) do
+        if TargetPlayer ~= "" and string.lower(string.sub(p.Name, 1, #TargetPlayer)) == string.lower(TargetPlayer) and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4)
+                Library:Notify("Teleport", "Teleported behind "..p.Name, 3)
+                found = true; break
+            end
+        end
+    end
+    if not found then Library:Notify("Teleport", "Target not found or invalid!", 3) end
 end)
 
 -- TAB: CONFIG
