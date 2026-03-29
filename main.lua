@@ -56,6 +56,10 @@ function Library:SetUIScale(scale)
     end
 end
 function Library:CreateKeySystem(config)
+    for _, v in pairs(PlayerGui:GetChildren()) do
+        if v.Name == "VX_KeySys" then v:Destroy() end
+    end
+    
     local kName = config.Name or "Key System"
     local kNote = config.Note or "Please enter your premium key to continue."
     local expectedRawKey = config.Key or "VORTEX"
@@ -581,7 +585,23 @@ Library:CreateKeySystem({
             end
         end)
         
-        MainTab:CreateSection("Utility")
+        MainTab:CreateSection("Utility / System")
+        MainTab:CreateToggle("Anti-AFK (Bypass Disconnect)", false, function(state)
+            if state then
+                if not _G.AntiAFK then
+                    _G.AntiAFK = LocalPlayer.Idled:Connect(function()
+                        local vu = game:GetService("VirtualUser")
+                        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                        task.wait(1)
+                        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                    end)
+                end
+                Library:Notify("System", "Anti-AFK Enabled", 3)
+            else
+                if _G.AntiAFK then _G.AntiAFK:Disconnect(); _G.AntiAFK = nil end
+                Library:Notify("System", "Anti-AFK Disabled", 3)
+            end
+        end)
         MainTab:CreateButton("Teleport to Home", function() 
             Library:Notify("Teleport", "Teleporting home...", 3)
         end)
@@ -659,6 +679,35 @@ Library:CreateKeySystem({
                     game:GetService("Lighting").Brightness = 1
                 end
             end)
+        end)
+        
+        VisualTab:CreateSection("Aimbot Assistance")
+        VisualTab:CreateToggle("Show Aimbot FOV Circle", false, function(state)
+            _G.FOV_Enabled = state
+            if state then
+                if not _G.FOVCircle then
+                    local pcallSuccess, drawingLib = pcall(function() return getfenv()["Drawing"].new("Circle") end)
+                    if pcallSuccess then
+                        _G.FOVCircle = drawingLib
+                        _G.FOVCircle.Visible = true
+                        _G.FOVCircle.Radius = 120
+                        _G.FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+                        _G.FOVCircle.Thickness = 1.5
+                        _G.FOVCircle.Filled = false
+                        
+                        _G.FOVConn = game:GetService("RunService").RenderStepped:Connect(function()
+                            if _G.FOVCircle then
+                                _G.FOVCircle.Position = game:GetService("UserInputService"):GetMouseLocation()
+                            end
+                        end)
+                    end
+                end
+                Library:Notify("Visuals", "Aimbot FOV On", 3)
+            else
+                if _G.FOVCircle then _G.FOVCircle:Remove(); _G.FOVCircle = nil end
+                if _G.FOVConn then _G.FOVConn:Disconnect(); _G.FOVConn = nil end
+                Library:Notify("Visuals", "Aimbot FOV Off", 3)
+            end
         end)
 
         -- TAB: CONFIG
