@@ -517,39 +517,5 @@ function Library:CreateWindow(name)
     return Window
 end
 
--- [ MASTER EXECUTION ]
-local Win = Library:CreateWindow("Vortex Hub")
-Library:Notify("Systems Loaded", "All Premium Systems Active!", 6)
-
-local ConfigTab = Win:CreateTab("Config", "rbxassetid://6031225818")
-ConfigTab:CreateSection("Theme Customization")
-ConfigTab:CreateColorPicker("Accent Color", Library.Config.MainColor, function(c)
-    Library.Config.MainColor = c; Library:UpdateTheme()
-end)
-
-ConfigTab:CreateSection("Keybinds")
-ConfigTab:CreateKeybind("Toggle Hub", Library.Config.ToggleKey, function(key)
-    Library.Config.ToggleKey = key; Library:Notify("Keybind", "UI Toggle set to: "..key.Name, 3)
-end)
-
-ConfigTab:CreateSection("Visuals")
-ConfigTab:CreateDropdown("Font Selection", {"Gotham", "Roboto", "Code", "Sarpanch"}, function(v)
-    local fMap = { Gotham = "rbxasset://fonts/families/GothamSSm.json", Roboto = "rbxasset://fonts/families/Roboto.json", Code = "rbxasset://fonts/families/Inconsolata.json", Sarpanch = "rbxasset://fonts/families/Sarpanch.json" }
-    Library.Config.Font = Font.new(fMap[v], Enum.FontWeight.Bold, Enum.FontStyle.Italic); Library:UpdateTheme()
-end)
-ConfigTab:CreateSlider("Background Opacity", 0, 100, 10, function(v)
-    Library.Config.Transparency = v/100; Library:UpdateTheme()
-end)
-ConfigTab:CreateSlider("UI Scale", 50, 150, 100, function(v)
-    Library:SetUIScale(v/100)
-end)
-
-local MainTab = Win:CreateTab("Main", "rbxassetid://6022668888")
-MainTab:CreateSection("Player Systems")
-MainTab:CreateToggle("Auto Farm", false, function() end)
-MainTab:CreateSlider("Walkspeed", 16, 500, 16, function() end)
-MainTab:CreateButton("Teleport to Home", function() end)
-MainTab:CreateLabel("Welcome to the Ultimate Build.")
-MainTab:CreateDiscordInvite("Link discord invite", "Name Hub", "rbxassetid://15222216598", "https://discord.gg/invitecode")
 
 return Library
