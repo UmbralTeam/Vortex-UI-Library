@@ -5,7 +5,15 @@ local LocalPlayer = Players.LocalPlayer or (Players:GetPropertyChangedSignal("Lo
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- [ RE-RUN PROTECTION ]
-if PlayerGui:FindFirstChild("VX_V20") then PlayerGui:FindFirstChild("VX_V20"):Destroy() end
+for _, v in pairs(PlayerGui:GetChildren()) do
+    if v.Name == "VX_V20" or v.Name == "VX_KeySys" or v.Name == "VX_Dialog" or v.Name == "VortexNotify" then
+        v:Destroy()
+    end
+end
+if getgenv then
+    if getgenv().VX_V20_LOADED then task.wait(0.1) end
+    getgenv().VX_V20_LOADED = true
+end
 
 -- [ CORE CONFIG ]
 local Library = {
@@ -130,6 +138,9 @@ function Library:CreateDialog(config)
 end
 
 function Library:CreateWindow(name)
+    for _, v in pairs(PlayerGui:GetChildren()) do
+        if v.Name == "VX_V20" then v:Destroy() end
+    end
     local ScreenGui = create("ScreenGui", { Name = "VX_V20", ResetOnSpawn = false, DisplayOrder = 100, Parent = PlayerGui })
     
     local Frame = create("Frame", {
