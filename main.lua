@@ -80,10 +80,13 @@ function Library:CreateKeySystem(config)
     create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = InpWrap })
     local Inp = create("TextBox", { Position = UDim2.new(0, 15, 0, 0), Size = UDim2.new(1, -30, 1, 0), BackgroundTransparency = 1, PlaceholderText = "Enter Key Here...", Text = "", TextColor3 = Color3.new(1,1,1), TextSize = 17, FontFace = self.Config.Font, TextXAlignment = Enum.TextXAlignment.Left, Parent = InpWrap })
     
-    local SubBtn = create("TextButton", { Position = UDim2.new(0, 20, 0, 170), Size = UDim2.new(1, -40, 0, 50), BackgroundColor3 = self.Config.SecondaryColor, AutoButtonColor = false, Text = "Submit Key", TextColor3 = Color3.new(1,1,1), TextSize = 18, FontFace = self.Config.Font, Parent = KFrame })
+    local SubBtn = create("TextButton", { Position = UDim2.new(0, 20, 0, 170), Size = UDim2.new(0.5, -25, 0, 50), BackgroundColor3 = self.Config.SecondaryColor, AutoButtonColor = false, Text = "Submit Key", TextColor3 = Color3.new(1,1,1), TextSize = 18, FontFace = self.Config.Font, Parent = KFrame })
     create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = SubBtn })
     local SubStr = create("UIStroke", { Color = self.Config.MainColor, Thickness = 1.5, Parent = SubBtn })
     table.insert(self.Elements.Accents, SubStr)
+    
+    local SkipBtn = create("TextButton", { Position = UDim2.new(0.5, 5, 0, 170), Size = UDim2.new(0.5, -25, 0, 50), BackgroundColor3 = self.Config.SecondaryColor, AutoButtonColor = false, Text = "Skip Key", TextColor3 = Color3.fromRGB(150, 150, 150), TextSize = 16, FontFace = self.Config.Font, Parent = KFrame })
+    create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = SkipBtn })
     
     local startPos, startDrag, dragging
     KFrame.InputBegan:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; startPos = inp.Position; startDrag = KFrame.Position end end)
@@ -92,6 +95,16 @@ function Library:CreateKeySystem(config)
     
     SubBtn.MouseEnter:Connect(function() TweenService:Create(SubBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 55)}):Play() end)
     SubBtn.MouseLeave:Connect(function() TweenService:Create(SubBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Config.SecondaryColor}):Play() end)
+    
+    SkipBtn.MouseEnter:Connect(function() TweenService:Create(SkipBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 55), TextColor3 = Color3.new(1,1,1)}):Play() end)
+    SkipBtn.MouseLeave:Connect(function() TweenService:Create(SkipBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Config.SecondaryColor, TextColor3 = Color3.fromRGB(150,150,150)}):Play() end)
+    
+    SkipBtn.MouseButton1Click:Connect(function()
+        TweenService:Create(KFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+        task.wait(0.5)
+        ScreenGui:Destroy()
+        if callback then callback() end
+    end)
     
     SubBtn.MouseButton1Click:Connect(function()
         if Inp.Text == expectedRawKey then
@@ -530,228 +543,119 @@ function Library:CreateWindow(name)
 end
 
 -- [ MASTER EXECUTION ]
-Library:CreateKeySystem({
-    Name = "VORTEX ACCESS CONTROL",
-    Note = "Enter your premium key to load the Hub.",
-    Key = "VORTEX123",
-    Callback = function()
-        -- Load main UI only after successful key input
-        local Win = Library:CreateWindow("VORTEX HUB V2")
-        Library:Notify("Success", "Access Granted. Welcome, " .. LocalPlayer.Name, 5)
-        
-        -- TAB: MAIN / PLAYER
-        local MainTab = Win:CreateTab("Player Settings", "rbxassetid://6023454032")
-        MainTab:CreateSection("Movement")
-        MainTab:CreateSlider("WalkSpeed", 16, 250, 16, function(value)
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid.WalkSpeed = value
-            end
-        end)
-        MainTab:CreateSlider("JumpPower", 50, 500, 50, function(value)
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid.JumpPower = value
-            end
-        end)
-        MainTab:CreateToggle("Infinite Jump", false, function(state)
-            _G.InfJump = state
-            if not _G.InfJumpConn then
-                _G.InfJumpConn = game:GetService("UserInputService").JumpRequest:Connect(function()
-                    if _G.InfJump then
-                        local char = LocalPlayer.Character
-                        if char and char:FindFirstChildOfClass("Humanoid") then
-                            char:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-                        end
-                    end
-                end)
-            end
-        end)
-        MainTab:CreateToggle("Noclip", false, function(state)
-            _G.Noclip = state
-            if not _G.NoclipConn then
-                _G.NoclipConn = game:GetService("RunService").Stepped:Connect(function()
-                    if _G.Noclip then
-                        local char = LocalPlayer.Character
-                        if char then
-                            for _, v in pairs(char:GetDescendants()) do
-                                if v:IsA("BasePart") and v.CanCollide then
-                                    v.CanCollide = false
-                                end
-                            end
-                        end
-                    end
-                end)
-            end
-        end)
-        
-        MainTab:CreateSection("Utility / System")
-        MainTab:CreateToggle("Anti-AFK (Bypass Disconnect)", false, function(state)
-            if state then
-                if not _G.AntiAFK then
-                    _G.AntiAFK = LocalPlayer.Idled:Connect(function()
-                        local vu = game:GetService("VirtualUser")
-                        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-                        task.wait(1)
-                        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-                    end)
-                end
-                Library:Notify("System", "Anti-AFK Enabled", 3)
-            else
-                if _G.AntiAFK then _G.AntiAFK:Disconnect(); _G.AntiAFK = nil end
-                Library:Notify("System", "Anti-AFK Disabled", 3)
-            end
-        end)
-        MainTab:CreateButton("Teleport to Home", function() 
-            Library:Notify("Teleport", "Teleporting home...", 3)
-        end)
-        MainTab:CreateDiscordInvite("Vortex Community", "Vortex Hub", "rbxassetid://15222216598", "https://discord.gg/vortex")
+local Win = Library:CreateWindow("VORTEX HUB V2")
+Library:Notify("Success", "Vortex Hub has loaded successfully! Welcome, " .. LocalPlayer.Name, 5)
 
-        -- TAB: COMBAT / FARM
-        local CombatTab = Win:CreateTab("Combat & Farm", "rbxassetid://6034503041")
-        CombatTab:CreateSection("Auto Farming")
-        CombatTab:CreateToggle("Auto-Farm Mobs", false, function(state)
-            _G.AutoFarm = state
-            if state then
-                task.spawn(function()
-                    while _G.AutoFarm do
-                        task.wait(1)
-                        pcall(function() print("Farming simulated.") end)
-                    end
-                end)
+-- TAB: MAIN / PLAYER
+local MainTab = Win:CreateTab("Player Settings", "rbxassetid://6023454032")
+MainTab:CreateSection("Movement")
+MainTab:CreateSlider("WalkSpeed", 16, 250, 16, function(value)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed = value end
+end)
+MainTab:CreateSlider("JumpPower", 50, 500, 50, function(value)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then char.Humanoid.JumpPower = value end
+end)
+MainTab:CreateToggle("Infinite Jump", false, function(state)
+    _G.InfJump = state
+    if state and not _G.InfJumpConn then
+        _G.InfJumpConn = game:GetService("UserInputService").JumpRequest:Connect(function()
+            if _G.InfJump then
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChildOfClass("Humanoid") then char:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
             end
         end)
-        CombatTab:CreateToggle("Auto-Collect Drops", false, function(state)
-            _G.AutoCollect = state
-        end)
-        
-        CombatTab:CreateSection("Combat Enhancements")
-        CombatTab:CreateToggle("Hitbox Expander", false, function(state)
-            _G.Hitbox = state
-            task.spawn(function()
-                while _G.Hitbox do
-                    task.wait(1)
-                    pcall(function()
-                        for _, p in pairs(Players:GetPlayers()) do
-                            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                                p.Character.HumanoidRootPart.Size = Vector3.new(10, 10, 10)
-                                p.Character.HumanoidRootPart.Transparency = 0.5
-                                p.Character.HumanoidRootPart.CanCollide = false
-                            end
-                        end
-                    end)
-                end
-            end)
-        end)
-        CombatTab:CreateButton("Kill Aura (Instant)", function()
-            Library:CreateDialog({
-                Title = "High Risk",
-                Content = "Kill Aura has a high ban rate. Proceed?",
-                Button1 = "Execute",
-                Button2 = "Cancel",
-                Callback1 = function()
-                    Library:Notify("Combat", "Kill Aura Activated. Proceed with caution.", 4)
-                end
-            })
-        end)
-
-        -- TAB: VISUALS
-        local VisualTab = Win:CreateTab("Visuals (ESP)", "rbxassetid://6034502932")
-        VisualTab:CreateSection("ESP Settings")
-        VisualTab:CreateToggle("Enable ESP (Name Tags)", false, function(state)
-            Library:Notify("Visuals", "ESP Toggled: "..tostring(state), 3)
-        end)
-        VisualTab:CreateToggle("Show Tracers", false, function(state)
-            Library:Notify("Visuals", "Tracers Toggled: "..tostring(state), 3)
-        end)
-        VisualTab:CreateToggle("Chams (Wallhack)", false, function(state)
-            Library:Notify("Visuals", "Chams Toggled: "..tostring(state), 3)
-        end)
-        
-        VisualTab:CreateSection("World Helpers")
-        VisualTab:CreateToggle("Full Bright", false, function(state)
-            pcall(function()
-                if state then
-                    game:GetService("Lighting").Ambient = Color3.new(1, 1, 1)
-                    game:GetService("Lighting").Brightness = 2
-                else
-                    game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127)
-                    game:GetService("Lighting").Brightness = 1
-                end
-            end)
-        end)
-        
-        VisualTab:CreateSection("Aimbot Assistance")
-        VisualTab:CreateToggle("Show Aimbot FOV Circle", false, function(state)
-            _G.FOV_Enabled = state
-            if state then
-                if not _G.FOVCircle then
-                    local pcallSuccess, drawingLib = pcall(function() return getfenv()["Drawing"].new("Circle") end)
-                    if pcallSuccess then
-                        _G.FOVCircle = drawingLib
-                        _G.FOVCircle.Visible = true
-                        _G.FOVCircle.Radius = 120
-                        _G.FOVCircle.Color = Color3.fromRGB(255, 255, 255)
-                        _G.FOVCircle.Thickness = 1.5
-                        _G.FOVCircle.Filled = false
-                        
-                        _G.FOVConn = game:GetService("RunService").RenderStepped:Connect(function()
-                            if _G.FOVCircle then
-                                _G.FOVCircle.Position = game:GetService("UserInputService"):GetMouseLocation()
-                            end
-                        end)
-                    end
-                end
-                Library:Notify("Visuals", "Aimbot FOV On", 3)
-            else
-                if _G.FOVCircle then _G.FOVCircle:Remove(); _G.FOVCircle = nil end
-                if _G.FOVConn then _G.FOVConn:Disconnect(); _G.FOVConn = nil end
-                Library:Notify("Visuals", "Aimbot FOV Off", 3)
-            end
-        end)
-
-        -- TAB: CONFIG
-        local SettingsTab = Win:CreateTab("Settings", "rbxassetid://6031289116")
-        SettingsTab:CreateSection("Theme Customization")
-        SettingsTab:CreateColorPicker("Accent Color", Library.Config.MainColor, function(c)
-            Library.Config.MainColor = c
-            Library:UpdateTheme()
-        end)
-        SettingsTab:CreateDropdown("Font Selection", {"Gotham", "Roboto", "Code", "Sarpanch"}, function(v)
-            local fMap = { Gotham = "rbxasset://fonts/families/GothamSSm.json", Roboto = "rbxasset://fonts/families/Roboto.json", Code = "rbxasset://fonts/families/Inconsolata.json", Sarpanch = "rbxasset://fonts/families/Sarpanch.json" }
-            if fMap[v] then
-                Library.Config.Font = Font.new(fMap[v], Enum.FontWeight.Bold, Enum.FontStyle.Italic)
-                Library:UpdateTheme()
-            end
-        end)
-        SettingsTab:CreateSlider("Background Opacity", 0, 100, 10, function(v)
-            Library.Config.Transparency = v/100
-            Library:UpdateTheme()
-        end)
-        SettingsTab:CreateSlider("UI Scale", 50, 150, 100, function(v)
-            Library:SetUIScale(v/100)
-        end)
-        
-        SettingsTab:CreateSection("App Controls")
-        SettingsTab:CreateKeybind("Toggle Hub Key", Library.Config.ToggleKey, function(key)
-            Library.Config.ToggleKey = key
-            Library:Notify("Keybind", "UI Toggle set to: "..key.Name, 3)
-        end)
-        SettingsTab:CreateButton("Unload Script", function()
-            Library:CreateDialog({
-                Title = "Unload Hub",
-                Content = "Are you sure you want to completely unload Vortex Hub?",
-                Button1 = "Destroy",
-                Button2 = "Stay",
-                Callback1 = function()
-                    for _, v in pairs(LocalPlayer.PlayerGui:GetChildren()) do
-                        if v.Name == "VX_V20" or v.Name == "VX_KeySys" or v.Name == "VX_Dialog" or v.Name == "VortexNotify" then v:Destroy() end
-                    end
-                end
-            })
-        end)
-
     end
-})
+end)
+MainTab:CreateToggle("Noclip", false, function(state)
+    _G.Noclip = state
+    if state and not _G.NoclipConn then
+        _G.NoclipConn = game:GetService("RunService").Stepped:Connect(function()
+            if _G.Noclip then
+                local char = LocalPlayer.Character
+                if char then for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end end end
+            end
+        end)
+    end
+end)
+
+MainTab:CreateSection("Utility / System")
+MainTab:CreateToggle("Anti-AFK (Bypass Disconnect)", false, function(state)
+    if state then
+        if not _G.AntiAFK then
+            _G.AntiAFK = LocalPlayer.Idled:Connect(function()
+                local vu = game:GetService("VirtualUser")
+                vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                task.wait(1)
+                vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+            end)
+        end
+        Library:Notify("System", "Anti-AFK Enabled", 3)
+    else
+        if _G.AntiAFK then _G.AntiAFK:Disconnect(); _G.AntiAFK = nil end
+        Library:Notify("System", "Anti-AFK Disabled", 3)
+    end
+end)
+MainTab:CreateButton("Teleport to Home", function() Library:Notify("Teleport", "Teleporting home...", 3) end)
+MainTab:CreateDiscordInvite("Vortex Community", "Vortex Hub", "rbxassetid://15222216598", "https://discord.gg/vortex")
+
+-- TAB: COMBAT / FARM
+local CombatTab = Win:CreateTab("Combat & Farm", "rbxassetid://6034503041")
+CombatTab:CreateSection("Auto Farming")
+CombatTab:CreateToggle("Auto-Farm Mobs", false, function(state)
+    _G.AutoFarm = state
+    if state then task.spawn(function() while _G.AutoFarm do task.wait(1) pcall(function() print("Farming simulated.") end) end end) end
+end)
+CombatTab:CreateToggle("Auto-Collect Drops", false, function(state) _G.AutoCollect = state end)
+
+CombatTab:CreateSection("Combat Enhancements")
+CombatTab:CreateToggle("Hitbox Expander", false, function(state)
+    _G.Hitbox = state
+    task.spawn(function() while _G.Hitbox do task.wait(1) pcall(function() for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then p.Character.HumanoidRootPart.Size = Vector3.new(10, 10, 10); p.Character.HumanoidRootPart.Transparency = 0.5; p.Character.HumanoidRootPart.CanCollide = false end end end) end end)
+end)
+CombatTab:CreateButton("Kill Aura (Instant)", function() Library:CreateDialog({ Title = "High Risk", Content = "Kill Aura has a high ban rate. Proceed?", Button1 = "Execute", Button2 = "Cancel", Callback1 = function() Library:Notify("Combat", "Kill Aura Activated. Proceed with caution.", 4) end }) end)
+
+-- TAB: VISUALS
+local VisualTab = Win:CreateTab("Visuals (ESP)", "rbxassetid://6034502932")
+VisualTab:CreateSection("ESP Settings")
+VisualTab:CreateToggle("Enable ESP (Name Tags)", false, function(state) Library:Notify("Visuals", "ESP Toggled: "..tostring(state), 3) end)
+VisualTab:CreateToggle("Show Tracers", false, function(state) Library:Notify("Visuals", "Tracers Toggled: "..tostring(state), 3) end)
+VisualTab:CreateToggle("Chams (Wallhack)", false, function(state) Library:Notify("Visuals", "Chams Toggled: "..tostring(state), 3) end)
+
+VisualTab:CreateSection("World Helpers")
+VisualTab:CreateToggle("Full Bright", false, function(state) pcall(function() if state then game:GetService("Lighting").Ambient = Color3.new(1, 1, 1); game:GetService("Lighting").Brightness = 2 else game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127); game:GetService("Lighting").Brightness = 1 end end) end)
+
+VisualTab:CreateSection("Aimbot Assistance")
+VisualTab:CreateToggle("Show Aimbot FOV Circle", false, function(state)
+    _G.FOV_Enabled = state
+    if state then
+        if not _G.FOVCircle then
+            local pcallSuccess, drawingLib = pcall(function() return getfenv()["Drawing"].new("Circle") end)
+            if pcallSuccess then
+                _G.FOVCircle = drawingLib
+                _G.FOVCircle.Visible = true; _G.FOVCircle.Radius = 120; _G.FOVCircle.Color = Color3.fromRGB(255, 255, 255); _G.FOVCircle.Thickness = 1.5; _G.FOVCircle.Filled = false
+                _G.FOVConn = game:GetService("RunService").RenderStepped:Connect(function() if _G.FOVCircle then _G.FOVCircle.Position = game:GetService("UserInputService"):GetMouseLocation() end end)
+            end
+        end
+        Library:Notify("Visuals", "Aimbot FOV On", 3)
+    else
+        if _G.FOVCircle then _G.FOVCircle:Remove(); _G.FOVCircle = nil end
+        if _G.FOVConn then _G.FOVConn:Disconnect(); _G.FOVConn = nil end
+        Library:Notify("Visuals", "Aimbot FOV Off", 3)
+    end
+end)
+
+-- TAB: CONFIG
+local SettingsTab = Win:CreateTab("Settings", "rbxassetid://6031289116")
+SettingsTab:CreateSection("Theme Customization")
+SettingsTab:CreateColorPicker("Accent Color", Library.Config.MainColor, function(c) Library.Config.MainColor = c; Library:UpdateTheme() end)
+SettingsTab:CreateDropdown("Font Selection", {"Gotham", "Roboto", "Code", "Sarpanch"}, function(v) local fMap = { Gotham = "rbxasset://fonts/families/GothamSSm.json", Roboto = "rbxasset://fonts/families/Roboto.json", Code = "rbxasset://fonts/families/Inconsolata.json", Sarpanch = "rbxasset://fonts/families/Sarpanch.json" }; if fMap[v] then Library.Config.Font = Font.new(fMap[v], Enum.FontWeight.Bold, Enum.FontStyle.Italic); Library:UpdateTheme() end end)
+SettingsTab:CreateSlider("Background Opacity", 0, 100, 10, function(v) Library.Config.Transparency = v/100; Library:UpdateTheme() end)
+SettingsTab:CreateSlider("UI Scale", 50, 150, 100, function(v) Library:SetUIScale(v/100) end)
+
+SettingsTab:CreateSection("App Controls")
+SettingsTab:CreateKeybind("Toggle Hub Key", Library.Config.ToggleKey, function(key) Library.Config.ToggleKey = key; Library:Notify("Keybind", "UI Toggle set to: "..key.Name, 3) end)
+SettingsTab:CreateButton("Unload Script", function() Library:CreateDialog({ Title = "Unload Hub", Content = "Are you sure you want to completely unload Vortex Hub?", Button1 = "Destroy", Button2 = "Stay", Callback1 = function() for _, v in pairs(LocalPlayer.PlayerGui:GetChildren()) do if v.Name == "VX_V20" or v.Name == "VX_KeySys" or v.Name == "VX_Dialog" or v.Name == "VortexNotify" then v:Destroy() end end end }) end)
 
 return Library
