@@ -526,38 +526,183 @@ function Library:CreateWindow(name)
 end
 
 -- [ MASTER EXECUTION ]
-local Win = Library:CreateWindow("Vortex Hub")
-Library:Notify("Systems Loaded", "All Premium Systems Active!", 6)
+Library:CreateKeySystem({
+    Name = "VORTEX ACCESS CONTROL",
+    Note = "Enter your premium key to load the Hub.",
+    Key = "VORTEX123",
+    Callback = function()
+        -- Load main UI only after successful key input
+        local Win = Library:CreateWindow("VORTEX HUB V2")
+        Library:Notify("Success", "Access Granted. Welcome, " .. LocalPlayer.Name, 5)
+        
+        -- TAB: MAIN / PLAYER
+        local MainTab = Win:CreateTab("Player Settings", "rbxassetid://6023454032")
+        MainTab:CreateSection("Movement")
+        MainTab:CreateSlider("WalkSpeed", 16, 250, 16, function(value)
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.WalkSpeed = value
+            end
+        end)
+        MainTab:CreateSlider("JumpPower", 50, 500, 50, function(value)
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.JumpPower = value
+            end
+        end)
+        MainTab:CreateToggle("Infinite Jump", false, function(state)
+            _G.InfJump = state
+            if not _G.InfJumpConn then
+                _G.InfJumpConn = game:GetService("UserInputService").JumpRequest:Connect(function()
+                    if _G.InfJump then
+                        local char = LocalPlayer.Character
+                        if char and char:FindFirstChildOfClass("Humanoid") then
+                            char:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+                        end
+                    end
+                end)
+            end
+        end)
+        MainTab:CreateToggle("Noclip", false, function(state)
+            _G.Noclip = state
+            if not _G.NoclipConn then
+                _G.NoclipConn = game:GetService("RunService").Stepped:Connect(function()
+                    if _G.Noclip then
+                        local char = LocalPlayer.Character
+                        if char then
+                            for _, v in pairs(char:GetDescendants()) do
+                                if v:IsA("BasePart") and v.CanCollide then
+                                    v.CanCollide = false
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+        
+        MainTab:CreateSection("Utility")
+        MainTab:CreateButton("Teleport to Home", function() 
+            Library:Notify("Teleport", "Teleporting home...", 3)
+        end)
+        MainTab:CreateDiscordInvite("Vortex Community", "Vortex Hub", "rbxassetid://15222216598", "https://discord.gg/vortex")
 
-local ConfigTab = Win:CreateTab("Config", "rbxassetid://6031225818")
-ConfigTab:CreateSection("Theme Customization")
-ConfigTab:CreateColorPicker("Accent Color", Library.Config.MainColor, function(c)
-    Library.Config.MainColor = c; Library:UpdateTheme()
-end)
+        -- TAB: COMBAT / FARM
+        local CombatTab = Win:CreateTab("Combat & Farm", "rbxassetid://6034503041")
+        CombatTab:CreateSection("Auto Farming")
+        CombatTab:CreateToggle("Auto-Farm Mobs", false, function(state)
+            _G.AutoFarm = state
+            if state then
+                task.spawn(function()
+                    while _G.AutoFarm do
+                        task.wait(1)
+                        pcall(function() print("Farming simulated.") end)
+                    end
+                end)
+            end
+        end)
+        CombatTab:CreateToggle("Auto-Collect Drops", false, function(state)
+            _G.AutoCollect = state
+        end)
+        
+        CombatTab:CreateSection("Combat Enhancements")
+        CombatTab:CreateToggle("Hitbox Expander", false, function(state)
+            _G.Hitbox = state
+            task.spawn(function()
+                while _G.Hitbox do
+                    task.wait(1)
+                    pcall(function()
+                        for _, p in pairs(Players:GetPlayers()) do
+                            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                                p.Character.HumanoidRootPart.Size = Vector3.new(10, 10, 10)
+                                p.Character.HumanoidRootPart.Transparency = 0.5
+                                p.Character.HumanoidRootPart.CanCollide = false
+                            end
+                        end
+                    end)
+                end
+            end)
+        end)
+        CombatTab:CreateButton("Kill Aura (Instant)", function()
+            Library:CreateDialog({
+                Title = "High Risk",
+                Content = "Kill Aura has a high ban rate. Proceed?",
+                Button1 = "Execute",
+                Button2 = "Cancel",
+                Callback1 = function()
+                    Library:Notify("Combat", "Kill Aura Activated. Proceed with caution.", 4)
+                end
+            })
+        end)
 
-ConfigTab:CreateSection("Keybinds")
-ConfigTab:CreateKeybind("Toggle Hub", Library.Config.ToggleKey, function(key)
-    Library.Config.ToggleKey = key; Library:Notify("Keybind", "UI Toggle set to: "..key.Name, 3)
-end)
+        -- TAB: VISUALS
+        local VisualTab = Win:CreateTab("Visuals (ESP)", "rbxassetid://6034502932")
+        VisualTab:CreateSection("ESP Settings")
+        VisualTab:CreateToggle("Enable ESP (Name Tags)", false, function(state)
+            Library:Notify("Visuals", "ESP Toggled: "..tostring(state), 3)
+        end)
+        VisualTab:CreateToggle("Show Tracers", false, function(state)
+            Library:Notify("Visuals", "Tracers Toggled: "..tostring(state), 3)
+        end)
+        VisualTab:CreateToggle("Chams (Wallhack)", false, function(state)
+            Library:Notify("Visuals", "Chams Toggled: "..tostring(state), 3)
+        end)
+        
+        VisualTab:CreateSection("World Helpers")
+        VisualTab:CreateToggle("Full Bright", false, function(state)
+            pcall(function()
+                if state then
+                    game:GetService("Lighting").Ambient = Color3.new(1, 1, 1)
+                    game:GetService("Lighting").Brightness = 2
+                else
+                    game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127)
+                    game:GetService("Lighting").Brightness = 1
+                end
+            end)
+        end)
 
-ConfigTab:CreateSection("Visuals")
-ConfigTab:CreateDropdown("Font Selection", {"Gotham", "Roboto", "Code", "Sarpanch"}, function(v)
-    local fMap = { Gotham = "rbxasset://fonts/families/GothamSSm.json", Roboto = "rbxasset://fonts/families/Roboto.json", Code = "rbxasset://fonts/families/Inconsolata.json", Sarpanch = "rbxasset://fonts/families/Sarpanch.json" }
-    Library.Config.Font = Font.new(fMap[v], Enum.FontWeight.Bold, Enum.FontStyle.Italic); Library:UpdateTheme()
-end)
-ConfigTab:CreateSlider("Background Opacity", 0, 100, 10, function(v)
-    Library.Config.Transparency = v/100; Library:UpdateTheme()
-end)
-ConfigTab:CreateSlider("UI Scale", 50, 150, 100, function(v)
-    Library:SetUIScale(v/100)
-end)
+        -- TAB: CONFIG
+        local SettingsTab = Win:CreateTab("Settings", "rbxassetid://6031289116")
+        SettingsTab:CreateSection("Theme Customization")
+        SettingsTab:CreateColorPicker("Accent Color", Library.Config.MainColor, function(c)
+            Library.Config.MainColor = c
+            Library:UpdateTheme()
+        end)
+        SettingsTab:CreateDropdown("Font Selection", {"Gotham", "Roboto", "Code", "Sarpanch"}, function(v)
+            local fMap = { Gotham = "rbxasset://fonts/families/GothamSSm.json", Roboto = "rbxasset://fonts/families/Roboto.json", Code = "rbxasset://fonts/families/Inconsolata.json", Sarpanch = "rbxasset://fonts/families/Sarpanch.json" }
+            if fMap[v] then
+                Library.Config.Font = Font.new(fMap[v], Enum.FontWeight.Bold, Enum.FontStyle.Italic)
+                Library:UpdateTheme()
+            end
+        end)
+        SettingsTab:CreateSlider("Background Opacity", 0, 100, 10, function(v)
+            Library.Config.Transparency = v/100
+            Library:UpdateTheme()
+        end)
+        SettingsTab:CreateSlider("UI Scale", 50, 150, 100, function(v)
+            Library:SetUIScale(v/100)
+        end)
+        
+        SettingsTab:CreateSection("App Controls")
+        SettingsTab:CreateKeybind("Toggle Hub Key", Library.Config.ToggleKey, function(key)
+            Library.Config.ToggleKey = key
+            Library:Notify("Keybind", "UI Toggle set to: "..key.Name, 3)
+        end)
+        SettingsTab:CreateButton("Unload Script", function()
+            Library:CreateDialog({
+                Title = "Unload Hub",
+                Content = "Are you sure you want to completely unload Vortex Hub?",
+                Button1 = "Destroy",
+                Button2 = "Stay",
+                Callback1 = function()
+                    for _, v in pairs(LocalPlayer.PlayerGui:GetChildren()) do
+                        if v.Name == "VX_V20" or v.Name == "VX_KeySys" or v.Name == "VX_Dialog" or v.Name == "VortexNotify" then v:Destroy() end
+                    end
+                end
+            })
+        end)
 
-local MainTab = Win:CreateTab("Main", "rbxassetid://6022668888")
-MainTab:CreateSection("Player Systems")
-MainTab:CreateToggle("Auto Farm", false, function() end)
-MainTab:CreateSlider("Walkspeed", 16, 500, 16, function() end)
-MainTab:CreateButton("Teleport to Home", function() end)
-MainTab:CreateLabel("Welcome to the Ultimate Build.")
-MainTab:CreateDiscordInvite("Link discord invite", "Name Hub", "rbxassetid://15222216598", "https://discord.gg/invitecode")
+    end
+})
 
 return Library
